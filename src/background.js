@@ -1,30 +1,75 @@
+import moment from 'moment';
+// var saves = {
+//   enablePeriod: false,
+//   start: moment("08:00","HH:mm"),
+//   end: moment("18:00","HH:mm")
+// }
+
 browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   if(request.request=='getState'){
-    getState()
+    getState(request.payload)
+  }
+  if(request.request=='enable'){
+    toggleHide(request.payload)
   }
   if(request.request=='setState'){
-    changeState(request.payload)
+    const key = request.payload.key
+    const val = request.payload.value
+    setState(key, val)
   }
 })
 
+chrome.alarms.create("checkTime",{
+  periodInMinutes: 1
+})
 
-function getState(){
-  chrome.storage.local.get('enableHidden', saves=>{
-    var enabled = saves.enableHidden || false
+function getState(state){
+  chrome.storage.local.get(state,function(saves){
     browser.runtime.sendMessage({
-      request: 'getState',
-      response: enabled
+      request:'getState',
+      response: saves[state] || null,
+      requestState: state
     })
   })
 }
 
-function changeState(enabled){
+chrome.alarms.onAlarm.addListener(function(alarm){
+  const now = moment().utc()
+  chrome.storage.local.get('periodConfig', saves=>{
+    const enable = saves.periodConfig.enable
+    const start = saves.periodConfig.start
+    const end = saves.periodConfig.end
+    console.log("alarm fired")
+    console.log(saves.periodConfig)
+    console.log(now)
+    console.log(now.isBetween(start, end))
+    if(enable&&now.isBetween(start, end)){
+      chrome.bookmarks.search("private", nodes=>{
+        if(nodes.length>0){
+          hideFolder()
+          setState('enable', true)
+        }
+      })
+    }
+  })
+
+})
+
+
+function setState(key, val){
+  var obj = {}
+  obj[key] = val
+  console.log(obj)
+  chrome.storage.local.set(obj)
+}
+
+function toggleHide(enabled){
   if(enabled){
     hideFolder()
   }else{
     loadFolder()
   }
-  chrome.storage.local.set({enableHidden:enabled})
+  setState('enable', enabled)
 }
 
 function saveFolder(folder){
@@ -72,7 +117,6 @@ function hideFolder(){
               saveFolder(result);
           });
           removeFolder(nodes[0].id);
-          hidden = true
       }
   })
 }
