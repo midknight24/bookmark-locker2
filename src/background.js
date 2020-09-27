@@ -43,13 +43,22 @@ chrome.alarms.onAlarm.addListener(function(alarm){
     console.log(saves.periodConfig)
     console.log(now)
     console.log(now.isBetween(start, end))
-    if(enable&&now.isBetween(start, end)){
-      chrome.bookmarks.search("private", nodes=>{
-        if(nodes.length>0){
-          hideFolder()
-          setState('enable', true)
-        }
-      })
+    if(enable){
+      if(now.isBetween(start, end)){
+        chrome.bookmarks.search("private", nodes=>{
+          if(nodes.length>0){
+            hideFolder()
+            setState('enable', true)
+          }
+        })
+      }else{
+        chrome.bookmarks.search("private", nodes=>{
+          if(nodes.length==0){
+            loadFolder()
+            setState('enable', false)
+          }
+        })        
+      }
     }
   })
 
