@@ -36,6 +36,7 @@ function getState(state){
 chrome.alarms.onAlarm.addListener(function(alarm){
   const now = moment().utc()
   chrome.storage.local.get('periodConfig', saves=>{
+    if(!saves.periodConfig) return
     const enable = saves.periodConfig.enable
     const start = saves.periodConfig.start
     const end = saves.periodConfig.end
