@@ -18,8 +18,10 @@
           </span>
       </a-row>
       <a-row :style="{'margin-top':'8px','margin-bottom':'8px'}">
-        <a-button type="primary" :style="{'margin-right': '5px'}" @click="uploadFolder">Upload</a-button>
-        <a-button type="primary" @click="downloadFolder">Download</a-button>
+        <a-button type="primary" :style="{'margin-right': '5px'}"
+          @click="uploadFolder" :disabled="periodConfig.enable||enable">Upload</a-button>
+        <a-button type="primary" @click="downloadFolder"
+          :disabled="periodConfig.enable||enable">Download</a-button>
       </a-row>
     </a-layout>
     <Backend v-else @signInSuccess="showSignIn=false;action=''" :action="action"></Backend>
@@ -42,13 +44,10 @@ export default {
     //   payload: "periodConfig"
     // })
     browser.runtime.onMessage.addListener((request, sender, sendResponse)=>{
-      console.log(request)
       if(request.request == 'returnState'){
-        console.log(request.requestState)
         if(request.response){
           this[request.requestState] = request.response
         }
-        console.log(request.response)
       }
     })
   },
@@ -71,7 +70,6 @@ export default {
   },
   methods: {
     OnChange(checked){
-      console.log("trigger")
       this.enable = checked
       browser.runtime.sendMessage({
         request: "enable",

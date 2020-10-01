@@ -3,7 +3,7 @@
 </template>
 
 <script>
-import {getFolder, createFolder} from '@/background.js'
+import {getFolder, createFolder, removePrivate} from '@/background.js'
 var firebase = require("firebase/app")
 var firebaseui = require('firebaseui')
 
@@ -35,17 +35,33 @@ export default {
     ui.start('#firebaseui-auth-container', {
       callbacks: {
         signInSuccessWithAuthResult: (authResult, redirectUrl)=>{
-          console.log(authResult)
           this.signedIn = true
           this.uid = firebase.auth().currentUser.uid
-          console.log(firebase.auth().currentUser.uid)
-          this.$emit("signInSuccess")
-          // var ref = firebase.database().ref('users/'+this.uid)
-          // console.log(ref)
-          // ref.set({
-          //   test:'testtest'
-          // })
-          // console.log("done")
+          if(this.action=='upload'){
+            getFolder(folder=>{
+              var ref = firebase.database().ref('users/'+this.uid)
+              ref.set({
+                private: folder
+              })
+              this.$message.success("uploaded to cloud",2)
+              this.$emit("signInSuccess")
+            })
+          }
+          else if(this.action=='download'){
+            firebase.database().ref('users/'+this.uid+'/private').once('value')
+            .then(res=>{
+              removePrivate(()=>{
+                createFolder(res.val()[0])
+              })
+              this.$message.success("downloaded to local",2)
+              this.$emit("signInSuccess")
+            })
+            .catch(err=>{
+              this.$message.error(err)
+            })
+          }
+
+          console.log("done")
           return false
         }
       },

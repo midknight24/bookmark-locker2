@@ -121,6 +121,16 @@ function addFolder(folder,id){
   }
 }
 
+function removePrivate(callback){
+  chrome.bookmarks.search("private",
+  function(nodes){
+    if(nodes.length>0){
+      removeFolder(nodes[0].id)
+    }
+    callback()
+  })
+}
+
 function hideFolder(){
   chrome.bookmarks.search("private",
   function(bookmarkTreeNodes){
@@ -135,10 +145,10 @@ function hideFolder(){
   })
 }
 
-export {getFolder, createFolder} 
+export {getFolder, createFolder, removePrivate} 
 
 function getFolder(callback){
-  chrome.bookmarks.serach("private"),
+  chrome.bookmarks.search("private",
   function(bookmarkTreeNodes){
     var nodes = bookmarkTreeNodes
     if(nodes.length>0){
@@ -148,7 +158,7 @@ function getFolder(callback){
     }else{
       window.alert("private folder is empty")
     }
-  }
+  })
 }
 
 function createFolder(folder){
@@ -167,6 +177,7 @@ function loadFolderFromStorage(){
       window.alert("already has folder private")
     }else{
       chrome.storage.local.get('private',function(saves){
+        console.log(saves)
         createFolder(saves.private['0'])
     });
     }
