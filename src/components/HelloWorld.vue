@@ -1,6 +1,6 @@
 <template>
   <div>
-    <a-layout>
+    <a-layout v-if="!showSignIn" class="main">
       <a-row>
         <h2>Hide</h2>
         <div>
@@ -17,14 +17,21 @@
             <a-switch :checked="periodConfig.enable" @change="togglePeriod" :style="{float: 'right'}"/>
           </span>
       </a-row>
+      <a-row :style="{'margin-top':'8px','margin-bottom':'8px'}">
+        <a-button type="primary" :style="{'margin-right': '5px'}" @click="uploadFolder">Upload</a-button>
+        <a-button type="primary" @click="downloadFolder">Download</a-button>
+      </a-row>
     </a-layout>
+    <Backend v-else @signInSuccess="showSignIn=false;action=''" :action="action"></Backend>
   </div>
 </template>
 
 <script>
 import moment from 'moment';
+import Backend from '@/components/Backend.vue'
 export default {
   name: 'HelloWorld',
+  components: {Backend},
   mounted () {
     browser.runtime.sendMessage({
       request: "getState",
@@ -32,19 +39,11 @@ export default {
     }),
     // browser.runtime.sendMessage({
     //   request: "getState",
-    //   payload: "start"
-    // }),
-    // browser.runtime.sendMessage({
-    //   request: "getState",
-    //   payload: "end"
-    // }),
-    browser.runtime.sendMessage({
-      request: "getState",
-      payload: "periodConfig"
-    })
+    //   payload: "periodConfig"
+    // })
     browser.runtime.onMessage.addListener((request, sender, sendResponse)=>{
       console.log(request)
-      if(request.request == 'getState'){
+      if(request.request == 'returnState'){
         console.log(request.requestState)
         if(request.response){
           this[request.requestState] = request.response
@@ -61,6 +60,8 @@ export default {
   data: function() {
     return {
       enable: false,
+      showSignIn: false,
+      action: "",
       periodConfig: {
         start: moment("08:00","HH:mm"),
         end: moment("18:00","HH:mm"),
@@ -106,13 +107,21 @@ export default {
           "value": this.periodConfig
         }
       })
+    },
+    uploadFolder(e){
+      this.action = "upload"
+      this.showSignIn = true
+    },
+    downloadFolder(e){
+      this.action = "download"
+      this.showSignIn = true
     }
   }
 }
 </script>
 
 <style scoped>
-div {
+.main {
   width: 200px;
   height: 100px;
 }

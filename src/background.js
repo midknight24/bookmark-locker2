@@ -6,6 +6,8 @@ import moment from 'moment';
 // }
 
 browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+  console.log(request)
+  console.log(request.payload)
   if(request.request=='getState'){
     getState(request.payload)
   }
@@ -24,9 +26,11 @@ chrome.alarms.create("checkTime",{
 })
 
 function getState(state){
+  console.log("state:")
+  console.log(state)
   chrome.storage.local.get(state,function(saves){
     browser.runtime.sendMessage({
-      request:'getState',
+      request:'returnState',
       response: saves[state] || null,
       requestState: state
     })
@@ -55,7 +59,7 @@ chrome.alarms.onAlarm.addListener(function(alarm){
       }else{
         chrome.bookmarks.search("private", nodes=>{
           if(nodes.length==0){
-            loadFolder()
+            loadFolderFromStorage()
             setState('enable', false)
           }
         })        
@@ -77,12 +81,12 @@ function toggleHide(enabled){
   if(enabled){
     hideFolder()
   }else{
-    loadFolder()
+    loadFolderFromStorage()
   }
   setState('enable', enabled)
 }
 
-function saveFolder(folder){
+function saveFolderToStorage(folder){
   chrome.storage.local.set({private:folder});
 }
 
@@ -124,14 +128,38 @@ function hideFolder(){
       if(nodes.length>0){
           console.log(nodes[0].id)
           chrome.bookmarks.getSubTree(nodes[0].id,function(result){
-              saveFolder(result);
+              saveFolderToStorage(result);
           });
           removeFolder(nodes[0].id);
       }
   })
 }
 
-function loadFolder(){
+export {getFolder, createFolder} 
+
+function getFolder(callback){
+  chrome.bookmarks.serach("private"),
+  function(bookmarkTreeNodes){
+    var nodes = bookmarkTreeNodes
+    if(nodes.length>0){
+      chrome.bookmarks.getSubTree(nodes[0].id,function(result){
+        callback(result)
+    });      
+    }else{
+      window.alert("private folder is empty")
+    }
+  }
+}
+
+function createFolder(folder){
+  chrome.bookmarks.create({
+    title: 'private',
+  }, function(result){
+    addFolder(folder, result.id)
+  })
+}
+
+function loadFolderFromStorage(){
   chrome.bookmarks.search("private",
   function(bookmarkTreeNodes){
     var nodes = bookmarkTreeNodes
@@ -139,11 +167,7 @@ function loadFolder(){
       window.alert("already has folder private")
     }else{
       chrome.storage.local.get('private',function(saves){
-        chrome.bookmarks.create({
-            title: 'private',
-        },function(result){
-            addFolder(saves.private['0'],result.id)
-        });
+        createFolder(saves.private['0'])
     });
     }
   })
