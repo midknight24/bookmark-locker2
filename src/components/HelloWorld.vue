@@ -38,11 +38,11 @@ export default {
     browser.runtime.sendMessage({
       request: "getState",
       payload: "enable"
-    }),
-    // browser.runtime.sendMessage({
-    //   request: "getState",
-    //   payload: "periodConfig"
-    // })
+    })
+    browser.runtime.sendMessage({
+      request: "getState",
+      payload: "periodConfig"
+    })
     browser.runtime.onMessage.addListener((request, sender, sendResponse)=>{
       if(request.request == 'returnState'){
         if(request.response){
